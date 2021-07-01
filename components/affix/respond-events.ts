@@ -4,7 +4,6 @@
  */
 
 export enum AffixRespondEvents {
-  resize = 'resize',
   scroll = 'scroll',
   touchstart = 'touchstart',
   touchmove = 'touchmove',

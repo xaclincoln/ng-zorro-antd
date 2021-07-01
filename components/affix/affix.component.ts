@@ -29,6 +29,7 @@ import {
 import { fromEvent, merge, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { auditTime, map, takeUntil } from 'rxjs/operators';
 
+import { NzResizeObserver } from 'ng-zorro-antd/cdk/resize-observer';
 import { NzConfigKey, NzConfigService, WithConfig } from 'ng-zorro-antd/core/config';
 import { NzScrollService } from 'ng-zorro-antd/core/services';
 import { NgStyleInterface, NumberInput, NzSafeAny } from 'ng-zorro-antd/core/types';
@@ -56,6 +57,7 @@ export class NzAffixComponent implements AfterViewInit, OnChanges, OnDestroy, On
   readonly _nzModuleName: NzConfigKey = NZ_CONFIG_MODULE_NAME;
   static ngAcceptInputType_nzOffsetTop: NumberInput;
   static ngAcceptInputType_nzOffsetBottom: NumberInput;
+  static resizeEvent = new Event('resize');
 
   @ViewChild('fixedEl', { static: true }) private fixedEl!: ElementRef<HTMLDivElement>;
 
@@ -95,6 +97,7 @@ export class NzAffixComponent implements AfterViewInit, OnChanges, OnDestroy, On
     @Inject(DOCUMENT) doc: NzSafeAny,
     public nzConfigService: NzConfigService,
     private scrollSrv: NzScrollService,
+    private resizeObserverService: NzResizeObserver,
     private ngZone: NgZone,
     private platform: Platform,
     private renderer: Renderer2,
@@ -148,6 +151,10 @@ export class NzAffixComponent implements AfterViewInit, OnChanges, OnDestroy, On
         this.offsetChanged$.pipe(
           takeUntil(this.destroy$),
           map(() => ({}))
+        ),
+        this.resizeObserverService.observe(this.target instanceof Window ? this.document.body : this.target).pipe(
+          takeUntil(this.destroy$),
+          map(() => NzAffixComponent.resizeEvent)
         )
       )
         .pipe(auditTime(NZ_AFFIX_DEFAULT_SCROLL_TIME))
@@ -292,7 +299,7 @@ export class NzAffixComponent implements AfterViewInit, OnChanges, OnDestroy, On
       });
     } else {
       if (
-        e.type === AffixRespondEvents.resize &&
+        e.type === 'resize' &&
         this.affixStyle &&
         this.affixStyle.position === 'fixed' &&
         this.placeholderNode.offsetWidth
